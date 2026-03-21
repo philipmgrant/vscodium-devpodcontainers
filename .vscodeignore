@@ -12,3 +12,7 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+
+# When building locally in a container, .pnpm-store can end up in the workspace root (see https://stackoverflow.com/a/78019974)
+# So make sure to exclude it from the extension build.
+.pnpm-store

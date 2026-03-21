@@ -1,4 +1,4 @@
-FROM docker.io/fedora:40
+FROM docker.io/fedora:43
 
 RUN sudo dnf update -y && sudo dnf install -y curl git which zsh pnpm nodejs22
 
