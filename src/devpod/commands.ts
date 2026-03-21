@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { spawn, spawnSync } from "child_process";
 import { buildDevPodCommand } from "./bin";
+import { getSshConfigPath } from "../ssh-config";
 
 export async function upDevpod(args: {
   configPath: string;
@@ -21,6 +22,11 @@ export async function upDevpod(args: {
     ];
     if (args.recreate) {
       cmdArgs.push("--recreate");
+    }
+
+    let sshConfigPath = getSshConfigPath();
+    if (sshConfigPath) {
+      cmdArgs.push("--ssh-config", sshConfigPath);
     }
 
     let devPodCommand = buildDevPodCommand(cmdArgs);
