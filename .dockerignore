@@ -1,0 +1,2 @@
+# We don't COPY any files into the devcontainer, so exclude them all and avoid hashing them
+*
