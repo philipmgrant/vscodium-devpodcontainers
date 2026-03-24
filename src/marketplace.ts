@@ -1,5 +1,6 @@
 import * as path from "path";
 import { spawnSync } from "child_process";
+import { buildSshCommand } from "./ssh/ssh";
 
 export const DOWNLOAD_EXTENSIONS_DIR = "$HOME/.devpodcontainers/extensions";
 
@@ -66,5 +67,6 @@ export async function downloadExtension(args: {
 		${url}\n`;
 
   // TODO: write output to output channel
-  spawnSync("ssh", [args.devpodHost, "--", "bash", "-c", `'${script}'`]);
+  const sshCommand = buildSshCommand([args.devpodHost, "--", "bash", "-c", `'${script}'`]);
+  spawnSync(sshCommand.command, sshCommand.args);
 }

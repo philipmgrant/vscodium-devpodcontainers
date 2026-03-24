@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { spawn, spawnSync } from "child_process";
 import { buildDevPodCommand } from "./bin";
+import { buildSshCommand } from "../ssh/ssh";
 
 export async function upDevpod(args: {
   configPath: string;
@@ -72,7 +73,8 @@ export async function listDevpods() {
 
 // a dirty hack until I find a better solution.
 export function findWorkDir(devpodHost: string) {
-  const output = spawnSync("ssh", [devpodHost, "--", "pwd"]);
+  const sshCommand = buildSshCommand([devpodHost, "--", "pwd"]);
+  const output = spawnSync(sshCommand.command, sshCommand.args);
   if (output.stdout) {
     return output.stdout.toString("utf-8").trim();
   }
