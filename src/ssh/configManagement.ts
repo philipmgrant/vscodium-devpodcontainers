@@ -1,5 +1,26 @@
+import * as vscode from "vscode";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { customSshConfigPath, defaultSshConfigPath, useNonDefaultSshConfig } from "./ssh";
+import { getDevPodCommand, useConfiguredDevPodCommand } from "../devpod/bin";
+
+export function validateDevpodAndSshSettings() {
+  let errors = [];
+  if (shouldOverrideProxyCommand()) {
+    if (!useNonDefaultSshConfig()) {
+      errors.push("'Use Devpod Command In Proxy Command' is set, but 'Remote.SSH Config File' is not set.");
+    }
+    if (!useConfiguredDevPodCommand()) {
+      errors.push("'Use Devpod Command In Proxy Command' is set, but 'Devpod Command' is not set.");
+    }
+  }
+  return errors;
+}
+
+function shouldOverrideProxyCommand() {
+  return vscode.workspace
+    .getConfiguration("remote.devpodcontainers")
+    .get<Boolean>("useDevpodCommandInProxyCommand", false);
+}
 
 export function copyDevpodToCustomSshConfig(devpodAddr: string) {
   // Copies the stanza belonging to the devpod <devpodAddr> from the default SSH config to
@@ -10,6 +31,9 @@ export function copyDevpodToCustomSshConfig(devpodAddr: string) {
   const sourceConfigLines = readFileLines(defaultSshConfigPath());
   let targetConfigLines = readFileLines(customSshConfigPath());
   const sourceHostStanza = getHostStanza(sourceConfigLines, devpodAddr);
+  if (shouldOverrideProxyCommand()) {
+    overrideProxyCommandInLines(sourceHostStanza);
+  }
   updateOrAppendHostStanza(targetConfigLines, devpodAddr, sourceHostStanza);
   writeFileLines(customSshConfigPath(), targetConfigLines);
 }
@@ -78,4 +102,21 @@ function findHostStanzaPosition(configLines: string[], hostName: string) {
     stanzaEndLine = configLines.length;
   }
   return [stanzaStartLine, stanzaEndLine];
+}
+
+// Pattern to identify the proxy command spec. It will look like:
+// "ProxyCommand <devpod binary> ssh <more options>", where the devpod command might be multi-word.
+// Regex has 3 capturing groups: (1) everything before the devpod binary, (2) the devpod binary,
+// (3) everything after.
+const PROXY_COMMAND_REGEXP = new RegExp("^(\\s*ProxyCommand\\s*[\\s=]\\s*)(.*)(\\sssh\\s.*)", "i");
+
+function overrideProxyCommandInLines(configLines: string[]) {
+  // Looks in the SSH config lines <configLines> for a ProxyCommand entry invoking '<devpod binary> ssh',
+  // and modifies that line, replacing the devpod binary with the devpod command as configured by the user.
+  for (let i=0; i < configLines.length; i++) {
+    if (PROXY_COMMAND_REGEXP.test(configLines[i])) {
+      configLines[i] = configLines[i].replace(PROXY_COMMAND_REGEXP, `$1${getDevPodCommand()}$3`);
+      break;
+    }
+  }
 }

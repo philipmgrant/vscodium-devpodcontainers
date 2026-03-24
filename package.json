@@ -88,6 +88,12 @@
             "description": "The command to use for running DevPod.",
             "default": "devpod",
             "scope": "machine-overridable"
+          },
+          "remote.devpodcontainers.useDevpodCommandInProxyCommand": {
+            "type": "boolean",
+            "description": "Updates the generated SSH proxy command to use the custom DevPod command. Usually needed when using the VSCodium Flatpak.",
+            "default": false,
+            "scope": "machine-overridable"
           }
         }
       }

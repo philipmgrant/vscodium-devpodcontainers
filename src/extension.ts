@@ -7,7 +7,7 @@ import * as path from "path";
 import { DevpodTreeView } from "./treeView";
 import { parseCustomizations } from "./spec";
 import { downloadExtension, DOWNLOAD_EXTENSIONS_DIR } from "./marketplace";
-import { copyDevpodToCustomSshConfig } from "./ssh/configManagement";
+import { copyDevpodToCustomSshConfig, validateDevpodAndSshSettings } from "./ssh/configManagement";
 
 // TODO: not fail when open vsx in not available
 
@@ -112,6 +112,11 @@ async function openContainer(recreate: boolean = false) {
   }
   const devpodHost = `${devpod.id}.devpod`;
 
+  const errors = validateDevpodAndSshSettings();
+  if (errors.length) {
+    vscode.window.showErrorMessage(errors.join("\n"));
+    return;
+  }
   copyDevpodToCustomSshConfig(devpodHost);
 
   const customizations = parseCustomizations(config.fsPath);
